@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fight!</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="interface">
+        <div class="interface-wrap">
+            <div v-if="showTurn == false" class="chars">
+                <div class="char-item char-0" v-on:click="select0"></div>
+                <div class="char-item char-1" v-on:click="select1"></div>
+                <div class="char-item char-2" v-on:click="select2"></div>
+            </div>
+            <div v-if="showTurn == true" class="character warrior-template" v-bind:class="selected">
+                <div class="char-info">
+                    <span id="your-name" class="name">{{charName}}</span>
+                    <progress id="charHp" class="HpBar" v-bind:value= "charHp" max="100"></progress>
+                </div>
+                <button id = "charHead" class="choseBlock chose" v-bind:class="headBlocked" v-on:click="block('head')"></button>
+                <button id = "charChest" class="choseBlock chose" v-bind:class="chestBlocked" v-on:click="block('chest')"></button>
+                <button id = "charFeet" class="choseBlock chose" v-bind:class="feetBlocked" v-on:click="block('feet')"></button>
+            </div>
+            
+            <div v-if="showTurn == true" class="enemy warrior-template">
+                <div class="char-info">
+                    <span id="enemy-name" class="name">Peacekeeper</span>
+                    <progress id="enemyHp" class="HpBar" v-bind:value= "enemyHp" max="100"></progress>
+                </div>
+                <button id = "enemyHead" class="choseAtack chose" v-bind:class="headAtacked" v-on:click="atack('head')"></button>
+                <button id = "enemyChest" class="choseAtack chose" v-bind:class="chestAtacked" v-on:click="atack('chest')"></button>
+                <button id = "enemyFeet" class="choseAtack chose" v-bind:class="feetAtacked" v-on:click="atack('feet')"></button>
+            </div>
+        </div>
+        <div class="announce" v-bind:class="isActive">
+            Round {{roundCount}}
+        </div>
+        <div class="fight-log">
+            <ul>
+                <li class="log-item" v-for='log in logs'>
+                    {{log.text}}
+                </li>
+            </ul>
+        </div>
+        <button id = 'next' v-if="showNext">Следующий раунд</button>
+        <button id = 'turn' class="processBtn" v-on:click="battle" v-if="showTurn">Ход</button>
+        <button id = 'clear' class="processBtn" v-on:click="clearAll" v-if="showTurn">Сбросить зоны</button>
+
+        <div v-if="finished" class="finish">
+            <p>Игра окончена!</p>
+            <span>{{result}}</span>
+            <br>
+            <button class="play-again" v-on:click="restart">Сыграть ещё раз</button>
+        </div>
+        
+    </div>
+
+
+
+    <script src="script.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+    <script>
+        var app = new Vue({
+            el: '#interface',
+            data: {
+                charName : name,
+                selected: '',
+                isActive: 'unactive',
+                showStart: true,
+                showNext: false,
+                showTurn: false,
+                roundCount: 1,
+                charHp: 100,
+                enemyHp: 100,
+                headBlocked: 'clear',
+                chestBlocked: 'clear',
+                feetBlocked: 'clear',
+                headAtacked: 'clear',
+                chestAtacked: 'clear',
+                feetAtacked: 'clear',
+                result: '',
+                finished: false,
+
+                blockCounter: 0,
+                atackCounter: 0,
+                logs: [
+                    { text: 'Если Вы готовы к бою, то скорее выберите своего героя!'},
+                    { text: 'Приветствую вас, милорд' + ' ' + name} 
+                ]
+            },
+            methods: {
+                select0: function(){
+                    this.selected = 'char-0';
+                    this.startGame();
+                },
+                select1: function(){
+                    this.selected = 'char-1';
+                    this.startGame();
+                },
+                select2: function(){
+                    this.selected = 'char-2';
+                    this.startGame();
+                },
+
+                restart: function(){
+                    this.showTurn = false;
+                    this.roundCount = 1;
+                    this.charHp = 100;
+                    this.enemyHp = 100;
+                    this.charSelect = true;
+                    this.logClear();
+                    this.finished = false;
+                    this.isActive = 'unactive';
+                    this.logPush('Если Вы готовы к бою, то скорее выберите своего героя!')
+                },
+
+                logPush: function(message) {   // Выводит информацию в лог битвы
+                    this.logs.unshift({text: '[Round' + ' ' + this.roundCount + '] ' + message})
+                },
+
+                logClear: function(){
+                    this.logs = [];
+                },
+
+                block: function(part) {  //  Выбираем зоны блока на своём персонаже
+                    let param = part;
+                    if (this.blockCounter < 2) {
+                        if (param == 'head') {
+                            this.headBlocked = 'blocked';
+                        } else if (param == 'chest') {
+                            this.chestBlocked = 'blocked';
+                        } else if (param == 'feet') {
+                            this.feetBlocked = 'blocked';
+                        }
+                        this.blockCounter += 1;
+                    } else {
+                        this.logPush('Блокировать можно только 2 зоны!');
+                    }
+                },
+
+                atack: function(part) {  // Выбираем зоны атаки по врагу
+                    let param = part;
+                    if (this.atackCounter < 2) {
+                        if (param == 'head') {
+                            this.headAtacked = 'atacked';
+                        } else if (param == 'chest') {
+                            this.chestAtacked = 'atacked';
+                        } else if (param == 'feet') {
+                            this.feetAtacked = 'atacked';
+                        }
+                        this.atackCounter += 1;
+                    } else {
+                        this.logPush('Атаковать можно только 2 зоны!');
+                    }
+                },
+
+                getRandom: function(min, max) {  //  Генерирует случайные целые числа
+                    return Math.floor(Math.random() * (max - min)) + min;
+                },
+
+                clearAll: function(){ // "Очищает" все зоны атаки и блока
+                    this.atackCounter = 0;
+                    this.blockCounter = 0;
+                    this.headBlocked = 'clear';
+                    this.chestBlocked = 'clear';
+                    this.feetBlocked = 'clear';
+                    this.headAtacked = 'clear';
+                    this.chestAtacked = 'clear';
+                    this.feetAtacked = 'clear';
+                },
+
+                startGame: function(){ // Кнопка начала игры
+                    this.isActive = 'active';
+                    this.logPush('Игра началась! Выбери по 2 зоны блокирования(слева) и атаки(справа)! Затем нажми кнопку "Ход"');
+                    this.showStart = false;
+                    this.showTurn = true;
+                },
+
+                battle: function(){ // Кнопка хода - очередной ход
+                    if (this.blockCounter < 2 || this.atackCounter < 2) {
+                        this.logPush('! Сначала нужно выбрать ПО 2 зоны атаки и защиты !')
+                    } else {
+                        let firstAtack = this.getRandom(1,4);
+                        let secondAtack = this.getRandom(1,4);
+                        while (secondAtack === firstAtack) {
+                            secondAtack = this.getRandom(1,4);
+                        }
+                        let firstBlock = this.getRandom(1,4);
+                        let secondBlock = this.getRandom(1,4);
+                        while (secondBlock === firstBlock) {
+                            secondBlock = this.getRandom(1,4);
+                        }
+
+                        this.check(firstAtack);
+                        this.check(secondAtack);
+                        this.checkBlock(firstBlock, secondBlock);
+
+                        this.roundCount += 1;
+                        this.clearAll();
+                        this.ifFinished();
+                    }                   
+                },
+
+                ifFinished: function(){
+                    if (this.charHp <= 0 & this.enemyHp <= 0) {
+                        this.finished = true;
+                        this.result = 'Ничья!'
+                    } else
+                    if (this.charHp <= 0) {
+                        this.finished = true;
+                        this.result = 'Вы проиграли :('
+                    } else if (this.enemyHp <= 0) {
+                        this.finished = true;
+                        this.result = 'Вы выиграли! :)'
+                    }
+                },
+
+                check: function(atackTarget) { // Проверка атаки врага по вашему блоку
+                    if (atackTarget == 1) {
+                        if (this.headBlocked == 'clear') {
+                            this.charHp -= 15;
+                            this.logPush('Вас ударили по голове на -15');
+                        } else {
+                            this.logPush('Вас пытались ударить по голове, но вы блокировали атаку')
+                        }
+                    } else if (atackTarget == 2) {
+                        if (this.chestBlocked == 'clear') {
+                            this.charHp -= 15;
+                            this.logPush('Вас ударили по груди на -15');
+                        } else {
+                            this.logPush('Вас пытались ударить по груди, но вы блокировали атаку')
+                        }
+                    } else if (atackTarget == 3) {
+                        if (this.feetBlocked == 'clear') {
+                            this.charHp -= 15;
+                            this.logPush('Вас ударили по ногам на -15');
+                        } else {
+                            this.logPush('Вас пытались ударить по ногам, но вы блокировали атаку')
+                        }
+                    }
+
+                },
+
+                checkBlock: function(first, second) { // Проверка блока врагом ваших атак
+                    console.log(first);
+                    console.log(second);
+                    if (this.headAtacked == 'atacked') {
+                        if (first != 1 & second != 1) {
+                            this.logPush('Вы ударили противника по голове на -20');
+                            this.enemyHp -= 20;
+                        } else {
+                            this.logPush('Вы пытались ударить по голове, но враг блокировал');
+                        }
+                    } if (this.chestAtacked == 'atacked') {
+                        if (first != 2 & second != 2) {
+                            this.logPush('Вы ударили противника по груди на -20');
+                            this.enemyHp -= 20;
+                        } else {
+                            this.logPush('Вы пытались ударить по груди, но враг блокировал');
+                        }
+                    } if (this.feetAtacked == 'atacked') {
+                        if (first != 3 & second != 3) {
+                            this.logPush('Вы ударили противника по ногам на -20');
+                            this.enemyHp -= 20;
+                        } else {
+                            this.logPush('Вы пытались ударить по ногам, но враг блокировал');
+                        }
+                    }
+                },
+            }
+        })
+    </script>
+</body>
+</html>
